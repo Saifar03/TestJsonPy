@@ -1,93 +1,47 @@
-from pathlib import Path
 import json
 
-"""
-#Test class for saving algebra equations
-class AlgebraLoader:
-    #Initiallizes the file and looks for the absolute file folder
-    def __init__(self, filepath= Path(__file__).resolve().parent):
-        self.filepath = filepath / 'config.json'
-        self.configs = self.load_settings()
-    #Loads the file        
-    def load_settings(self):        
-        if not self.filepath.is_file():
-            print("Json file not found.")
-            return self.default_settings() 
-        try:
-            with  open(self.filepath) as file:
-                return json.load(file)
-        except json.JSONDecodeError:
-            print("Error reading JSON.")
-            return self.default_settings()
-    def save_settings(self):
-        with open(self.filepath, "w") as file:
-            json.dump(self.configs, file, indent=4)
-    def default_settings(self):
-        default = {
-            "A": 1,
-            "Variables": "x",
-            "B": 1,
-            "C": 1
-        }
-        self.settings = default
-        self.save_settings()
-        return default
-"""
+
+#TODO Finish the parser, for Ax+B=C where all A,B,C are integers. 
+# Fixing needs to work when A = 1(not visible) and B = 0 (Also not visible)
+# Future make it work with Fractions
+# Implement the OCR
+class EquationParser:
+    def __init__(self, equation):
+        equation.replace(" ","")
+        self.sides = equation.split(sep="=")
+    def paserHelper(self):
+        side = 0
+        sign = "+"
+        biggest = -1
+        for i in enumerate(self.sides):
+            ind = self.sides[i[0]].find("x")
+            if(ind>biggest):
+                side = i[0]
+        if(self.sides[side].find("+")==-1):
+            sign = "-"
+        self.parser(side, sign)
+    def parser(self,side,sign):
+        self.sideSign = self.sides[side].rfind(sign)
+        self.part = self.sides[side][self.sideSign::1]
+        if self.part.lstrip(sign).isdigit():
+            self.b = int(self.part)
+            self.a = int(self.sides[side][:self.sides[side].find("x")])
+        else:
+            self.a = int(self.part[self.part.find(sign):self.part.find("x")])
+            self.b = int(self.sides[side][:self.sideSign])
+        self.c = int(self.sides[side-1])
 
 
-#TODO: Change logic to first check if its digit then check if alphanum or ignore it
 equation = input()
-equation = equation.replace(" ","")
-sides = equation.split(sep="=")
-if(len(sides[0])>len(sides[1])):
-    if(sides[0].find("+")!=-1):
-        sign = sides[0].find("+")
-        part = sides[0][sign::1]
-        if part.isalnum():
-            a = int(part[:sides[0].find("x")])
-            b = int(sides[0][:sign])
-        else:
-            b= int(part)
-            a = int(sides[0][:sides[0].find("x")])
-                        
-    else:
-        sign = sides[0].rfind("-")
-        part = sides[0][sign::1]
-        if part.lstrip("-").isalnum():
-            a = int(part[:part.find("x")])
-            b = int(sides[0][:sign])
-        else:
-            b= int(part)
-            a = int(sides[0][:sides[0].find("x")])
-               
-    c = int(sides[1])
-else:
-    if(sides[1].find("+")!=-1):
-           sign = sides[1].find("+")
-           part = sides[1][sign::1]
-           if part.isalnum():
-               a = int(part[:sides[1].find("x")])
-               b = int(sides[:sign])
-           else:
-               b= int(part)
-               a = int(sides[1][:sides[1].find("x")])
-                           
-    else:
-           sign = sides[1].rfind("-")
-           part = sides[1][sign::1]
-           if part.lstrip("-").isalnum():
-               a = int(part[:part.find("x")])
-               b = int(sides[1][:sign])
-           else:
-               b= int(part)
-               a = int(sides[1][:sides[1].find("x")])
-    c = int(sides[0])
+eq = EquationParser(equation)
+eq.paserHelper()
 
 default = {
-            "A": a,
+            "A": eq.a,
+            "OpInX": None,
             "Variables": "x",
-            "B": b,
-            "C": c
+            "B": eq.b,
+            "C": eq.c
         }
 with open("config.json", "w") as file:
         json.dump(default, file, indent=4)
